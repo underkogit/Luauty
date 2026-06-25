@@ -1,20 +1,36 @@
 mod modules;
 
+use clap::Parser;
 use mlua::prelude::*;
 use std::fs;
-use std::io::{self, Write};
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    pub script: Option<String>,
+}
 
 fn main() -> LuaResult<()> {
     let lua = Lua::new();
-    let globals = lua.globals();
+    let args = Args::parse();
+    let script_path = args.script.as_deref().unwrap_or("scripts\\init.luau");
 
-    modules::luaio::init(&lua)?;
-    modules::winapi::init(&lua)?;
-    modules::io::init(&lua)?;
-    modules::json::init(&lua)?;
-    modules::http::init(&lua)?;
-    let script = fs::read_to_string("scripts\\init.luau")
-        .map_err(|e| LuaError::RuntimeError(e.to_string()))?;
+    for init in [
+        modules::luaio::init as fn(&Lua) -> LuaResult<()>,
+        modules::winapi::init,
+        modules::io::init,
+        modules::json::init,
+        modules::http::init,
+        modules::regex::init,
+        modules::process::init,
+        modules::thread::init,
+      
+    ] {
+        init(&lua)?;
+    }
+
+    let script =
+        fs::read_to_string(script_path).map_err(|e| LuaError::RuntimeError(e.to_string()))?;
 
     lua.load(&script).exec()?;
 

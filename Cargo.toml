@@ -5,12 +5,9 @@ edition = "2024"
 
 [dependencies]
 mlua = { version = "0.11.6", features = ["luau"] }
-windows = { version = "0.62.2", features = [
-    "Win32_Foundation",
-    "Win32_System_LibraryLoader",
-    "Win32_UI_WindowsAndMessaging",
-    "Win32_Graphics_Gdi"
-] }
+windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Gdi", "Win32_System_Threading"] }
 winapi = "0.3.9"
 reqwest = { version = "0.13.4", features = ["blocking"] }
 serde_json = "1.0.150"
+regex = "1.12.4"
+clap = { version = "4.6.1", features = ["derive"] }

@@ -25,11 +25,9 @@ fn headers_to_reqwest(headers: LuaTable) -> LuaResult<reqwest::header::HeaderMap
 pub fn init(lua: &Lua) -> LuaResult<()> {
     let globals = lua.globals();
 
-    let http_get = lua.create_function(|lua, url: String| {
-        match reqwest::blocking::get(&url) {
-            Ok(resp) => http_result(lua, resp.status().as_u16(), resp.text().unwrap_or_default()),
-            Err(_) => http_result(lua, 0, String::new()),
-        }
+    let http_get = lua.create_function(|lua, url: String| match reqwest::blocking::get(&url) {
+        Ok(resp) => http_result(lua, resp.status().as_u16(), resp.text().unwrap_or_default()),
+        Err(_) => http_result(lua, 0, String::new()),
     })?;
 
     let http_post = lua.create_function(|lua, (url, body): (String, String)| {
@@ -50,14 +48,17 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
         }
     })?;
 
-    let http_post_h = lua.create_function(|lua, (url, body, headers): (String, String, LuaTable)| {
-        let client = reqwest::blocking::Client::new();
-        let headers = headers_to_reqwest(headers)?;
-        match client.post(&url).headers(headers).body(body).send() {
-            Ok(resp) => http_result(lua, resp.status().as_u16(), resp.text().unwrap_or_default()),
-            Err(_) => http_result(lua, 0, String::new()),
-        }
-    })?;
+    let http_post_h =
+        lua.create_function(|lua, (url, body, headers): (String, String, LuaTable)| {
+            let client = reqwest::blocking::Client::new();
+            let headers = headers_to_reqwest(headers)?;
+            match client.post(&url).headers(headers).body(body).send() {
+                Ok(resp) => {
+                    http_result(lua, resp.status().as_u16(), resp.text().unwrap_or_default())
+                }
+                Err(_) => http_result(lua, 0, String::new()),
+            }
+        })?;
 
     globals.set("http_get", http_get)?;
     globals.set("http_post", http_post)?;

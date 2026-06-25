@@ -1,4 +1,10 @@
 function printTable(t, indent)
+
+	if type(t) ~= "table" then
+		print(t)
+		return
+	end
+
 	indent = indent or 0
 	local spacing = string.rep("  ", indent)
 

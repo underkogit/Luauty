@@ -2,19 +2,23 @@ use std::ffi::OsString;
 use std::os::windows::ffi::OsStringExt;
 
 use mlua::prelude::*;
+use windows::Win32::Foundation::{CloseHandle, HWND, LPARAM, WPARAM};
+use windows::Win32::System::Threading::{OpenProcess, PROCESS_TERMINATE, TerminateProcess};
+use windows::Win32::UI::WindowsAndMessaging::{
+    DestroyWindow, EnumWindows, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId,
+    IsWindow, IsWindowVisible, PostMessageW, SendMessageW, WM_CLOSE,
+};
 use windows::core::BOOL;
-use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
-use windows::Win32::UI::WindowsAndMessaging::{DestroyWindow, EnumWindows, GetWindowTextLengthW, GetWindowTextW, IsWindow, IsWindowVisible, PostMessageW, SendMessageW, WM_CLOSE};
-
 fn wide_to_string(wide: &[u16]) -> String {
     OsString::from_wide(wide).to_string_lossy().into_owned()
 }
-
+fn hwnd_from_usize(hwnd: usize) -> HWND {
+    HWND(hwnd as *mut core::ffi::c_void)
+}
 pub fn init(lua: &Lua) -> LuaResult<()> {
     let globals = lua.globals();
-    let winapi = lua.create_table()?;
 
-    let find_window = lua.create_function(|_, query: String| {
+    let find_window_by_text = lua.create_function(|_, query: String| {
         struct Ctx {
             query: String,
             found: usize,
@@ -55,7 +59,19 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
 
         Ok(ctx.found)
     })?;
-    globals.set("find_window", find_window)?;
+    globals.set("find_window_by_text", find_window_by_text)?;
+
+    let get_window_process_id = lua.create_function(|_, hwnd: usize| {
+        let hwnd = hwnd_from_usize(hwnd);
+
+        let mut pid = 0u32;
+        unsafe {
+            GetWindowThreadProcessId(hwnd, Some(&mut pid));
+        }
+
+        Ok(pid)
+    })?;
+    globals.set("get_window_process_id", get_window_process_id)?;
 
     let find_windows = lua.create_function(|lua, query: String| {
         struct Ctx {
@@ -125,7 +141,6 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
     })?;
     globals.set("get_window_title", get_window_title)?;
 
-
     let close_window = lua.create_function(|_, hwnd: usize| {
         let hwnd = HWND(hwnd as *mut core::ffi::c_void);
 
@@ -141,6 +156,21 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
 
         Ok(())
     })?;
+
     globals.set("close_window", close_window)?;
+
+    let close_process = lua.create_function(|_, pid: u32| {
+        let handle = unsafe { OpenProcess(PROCESS_TERMINATE, false, pid) }
+            .map_err(|e| LuaError::RuntimeError(e.to_string()))?;
+
+        unsafe {
+            TerminateProcess(handle, 0).map_err(|e| LuaError::RuntimeError(e.to_string()))?;
+            CloseHandle(handle);
+        }
+
+        Ok(())
+    })?;
+    globals.set("close_process", close_process)?;
+
     Ok(())
 }

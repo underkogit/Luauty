@@ -9,12 +9,15 @@ use windows::Win32::UI::WindowsAndMessaging::{
     IsWindow, IsWindowVisible, PostMessageW, SendMessageW, WM_CLOSE,
 };
 use windows::core::BOOL;
+
 fn wide_to_string(wide: &[u16]) -> String {
     OsString::from_wide(wide).to_string_lossy().into_owned()
 }
+
 fn hwnd_from_usize(hwnd: usize) -> HWND {
     HWND(hwnd as *mut core::ffi::c_void)
 }
+
 pub fn init(lua: &Lua) -> LuaResult<()> {
     let globals = lua.globals();
 
@@ -59,7 +62,6 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
 
         Ok(ctx.found)
     })?;
-    globals.set("find_window_by_text", find_window_by_text)?;
 
     let get_window_process_id = lua.create_function(|_, hwnd: usize| {
         let hwnd = hwnd_from_usize(hwnd);
@@ -71,7 +73,6 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
 
         Ok(pid)
     })?;
-    globals.set("get_window_process_id", get_window_process_id)?;
 
     let find_windows = lua.create_function(|lua, query: String| {
         struct Ctx {
@@ -121,7 +122,6 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
 
         Ok(arr)
     })?;
-    globals.set("find_windows", find_windows)?;
 
     let get_window_title = lua.create_function(|_, hwnd: usize| {
         let hwnd = HWND(hwnd as *mut core::ffi::c_void);
@@ -139,7 +139,6 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
 
         Ok(wide_to_string(&buf[..written as usize]))
     })?;
-    globals.set("get_window_title", get_window_title)?;
 
     let close_window = lua.create_function(|_, hwnd: usize| {
         let hwnd = HWND(hwnd as *mut core::ffi::c_void);
@@ -157,8 +156,6 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
         Ok(())
     })?;
 
-    globals.set("close_window", close_window)?;
-
     let close_process = lua.create_function(|_, pid: u32| {
         let handle = unsafe { OpenProcess(PROCESS_TERMINATE, false, pid) }
             .map_err(|e| LuaError::RuntimeError(e.to_string()))?;
@@ -170,6 +167,12 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
 
         Ok(())
     })?;
+
+    globals.set("find_window_by_text", find_window_by_text)?;
+    globals.set("get_window_process_id", get_window_process_id)?;
+    globals.set("find_windows", find_windows)?;
+    globals.set("get_window_title", get_window_title)?;
+    globals.set("close_window", close_window)?;
     globals.set("close_process", close_process)?;
 
     Ok(())

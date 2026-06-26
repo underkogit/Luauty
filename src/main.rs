@@ -13,9 +13,10 @@ struct Args {
 fn main() -> LuaResult<()> {
     let lua = Lua::new();
     let args = Args::parse();
-    let script_path = args.script.as_deref().unwrap_or("scripts\\init.luau");
+    let script_path = args.script.as_deref().unwrap_or("scripts\\main.luau");
 
     for init in [
+        modules::console::init,
         modules::luaio::init as fn(&Lua) -> LuaResult<()>,
         modules::winapi::init,
         modules::io::init,
@@ -24,7 +25,8 @@ fn main() -> LuaResult<()> {
         modules::regex::init,
         modules::process::init,
         modules::thread::init,
-      
+        modules::path::init,
+
     ] {
         init(&lua)?;
     }

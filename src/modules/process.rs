@@ -13,10 +13,10 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
             .output()
             .map_err(|e| LuaError::RuntimeError(e.to_string()))?;
 
-        let stdout = String::from_utf8(output.stdout)
-            .map_err(|e| LuaError::RuntimeError(e.to_string()))?;
-        let stderr = String::from_utf8(output.stderr)
-            .map_err(|e| LuaError::RuntimeError(e.to_string()))?;
+        let stdout =
+            String::from_utf8(output.stdout).map_err(|e| LuaError::RuntimeError(e.to_string()))?;
+        let stderr =
+            String::from_utf8(output.stderr).map_err(|e| LuaError::RuntimeError(e.to_string()))?;
 
         let result = lua.create_table()?;
         result.set("status", output.status.code())?;
@@ -24,7 +24,6 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
         result.set("stderr", stderr)?;
         Ok(result)
     })?;
-    globals.set("run_process", run_process)?;
 
     let run_process_stream = lua.create_function(
         |lua, (program, args, callback): (String, Vec<String>, LuaFunction)| {
@@ -86,6 +85,8 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
             Ok(result)
         },
     )?;
+
+    globals.set("run_process", run_process)?;
     globals.set("run_process_stream", run_process_stream)?;
 
     Ok(())

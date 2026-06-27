@@ -10,7 +10,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 use windows::core::BOOL;
 
- 
+
 
 fn wide_to_string(wide: &[u16]) -> String {
     OsString::from_wide(wide).to_string_lossy().into_owned()
@@ -59,7 +59,7 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
         let mut ctx = Ctx { query, found: 0 };
 
         unsafe {
-            EnumWindows(Some(enum_proc), LPARAM(&mut ctx as *mut Ctx as isize));
+            let _ = EnumWindows(Some(enum_proc), LPARAM(&mut ctx as *mut Ctx as isize));
         }
 
         Ok(ctx.found)
@@ -114,7 +114,7 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
         };
 
         unsafe {
-            EnumWindows(Some(enum_proc), LPARAM(&mut ctx as *mut Ctx as isize));
+            let _ = EnumWindows(Some(enum_proc), LPARAM(&mut ctx as *mut Ctx as isize));
         }
 
         let arr = lua.create_table()?;
@@ -148,10 +148,10 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
         unsafe {
             SendMessageW(hwnd, WM_CLOSE, Some(WPARAM(0)), Some(LPARAM(0)));
             if IsWindow(Some(hwnd)).as_bool() {
-                PostMessageW(Some(hwnd), WM_CLOSE, WPARAM(0), LPARAM(0));
+                let _ = PostMessageW(Some(hwnd), WM_CLOSE, WPARAM(0), LPARAM(0));
             }
             if IsWindow(Some(hwnd)).as_bool() {
-                DestroyWindow(hwnd);
+                let _ = DestroyWindow(hwnd);
             }
         }
 
@@ -164,7 +164,7 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
 
         unsafe {
             TerminateProcess(handle, 0).map_err(|e| LuaError::RuntimeError(e.to_string()))?;
-            CloseHandle(handle);
+            let _ = CloseHandle(handle);
         }
 
         Ok(())

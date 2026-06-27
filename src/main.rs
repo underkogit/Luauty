@@ -27,6 +27,7 @@ fn main() -> LuaResult<()> {
         modules::process::init,
         modules::thread::init,
         modules::path::init,
+        modules::archive::init,
     ] {
         init(&lua)?;
     }

@@ -15,10 +15,11 @@ fn main() -> LuaResult<()> {
     let args = Args::parse();
     let script_path = args.script.as_deref().unwrap_or("scripts\\main.luau");
 
+    modules::console::init(&lua, script_path)?;
     for init in [
-        modules::console::init,
         modules::luaio::init as fn(&Lua) -> LuaResult<()>,
-        modules::winapi::init,
+        modules::winapi::winapi::init,
+        modules::winapi::winapi_messagebox::init,
         modules::io::init,
         modules::json::init,
         modules::http::init,
@@ -26,7 +27,6 @@ fn main() -> LuaResult<()> {
         modules::process::init,
         modules::thread::init,
         modules::path::init,
-
     ] {
         init(&lua)?;
     }

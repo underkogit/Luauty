@@ -29,21 +29,16 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
         Ok(true)
     })?;
 
-    let copy_file = lua.create_function(|_, (src, dst): (String, String)| {
-        Ok(fs::copy(&src, &dst).is_ok())
-    })?;
+    let copy_file =
+        lua.create_function(|_, (src, dst): (String, String)| Ok(fs::copy(&src, &dst).is_ok()))?;
 
     let copy_dir = lua.create_function(|_, (src, dst): (String, String)| {
         Ok(copy_dir_all(Path::new(&src), Path::new(&dst)).is_ok())
     })?;
 
-    let file_exists = lua.create_function(|_, path: String| {
-        Ok(Path::new(&path).is_file())
-    })?;
+    let file_exists = lua.create_function(|_, path: String| Ok(Path::new(&path).is_file()))?;
 
-    let dir_exists = lua.create_function(|_, path: String| {
-        Ok(Path::new(&path).is_dir())
-    })?;
+    let dir_exists = lua.create_function(|_, path: String| Ok(Path::new(&path).is_dir()))?;
 
     let find_files_by_name = lua.create_function(|_, (dir_path, pattern): (String, String)| {
         let regex = Regex::new(&pattern).map_err(|e| LuaError::RuntimeError(e.to_string()))?;
@@ -59,6 +54,26 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
         Ok(results.into_iter().next())
     })?;
 
+    let get_parent_dir = lua.create_function(|_, path: String| {
+        let path_obj = Path::new(&path);
+
+        let parent = path_obj.parent();
+
+        match parent {
+            Some(dir) => {
+                let dir_str = dir.to_string_lossy().to_string();
+
+                if dir_str.is_empty() {
+                    Ok(path)
+                } else {
+                    Ok(dir_str)
+                }
+            }
+            None => Ok(path),
+        }
+    })?;
+
+    globals.set("get_parent_dir", get_parent_dir)?;
     globals.set("read_file", read_file)?;
     globals.set("write_file", write_file)?;
     globals.set("copy_file", copy_file)?;

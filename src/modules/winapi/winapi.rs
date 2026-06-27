@@ -61,7 +61,7 @@ pub fn init(lua: &Lua) -> LuaResult<()> {
         unsafe {
             let _ = EnumWindows(Some(enum_proc), LPARAM(&mut ctx as *mut Ctx as isize));
         }
-
+ 
         Ok(ctx.found)
     })?;
 
